@@ -1,35 +1,43 @@
 import random
 
+# Lista pequeña por ahora; puedes ampliarla con más palabras válidas.
 words = [
-    "buffer"#, "syntax", "binary", "thread", "kernel",
-    #"module", "object", "script", "static", "editor",
-    #"client", "server", "daemon", "socket", "layout",
-    #"update", "branch", "repeat", "device"
+    "buffer"
 ]
 
+
 class WordList:
+    """Utility for word list operations.
+
+    Responsibilities:
+    - provide a random target word
+    - check length validity
+    - check whether a word exists in the known list
+    """
+
+    VALID_LENGTH = 6
 
     @classmethod
     def get_random_word(cls):
         return random.choice(words)
-    
+
     @classmethod
-    def is_valid_word(cls, word):
-        if word in words:
-            print("Palabra correcta!")
-            True
-        elif len(word) > 6 or len(word) < 6:
-            print("La palabra debe tener 6 letras")
-        else:
-            print("Palabra incorrecta")
-            
-        
-    
+    def is_correct_length(cls, word):
+        """Return True when the provided word has the expected length."""
+        return isinstance(word, str) and len(word) == cls.VALID_LENGTH
 
+    @classmethod
+    def is_known_word(cls, word):
+        """Return True when the provided word is in the known words list."""
+        return word in words
 
 
         
         
 
 
-        
+
+
+
+
+
