@@ -1,19 +1,11 @@
 import random
 
-# Lista pequeña por ahora; puedes ampliarla con más palabras válidas.
 words = [
     "buffer"
 ]
 
 
 class WordList:
-    """Utility for word list operations.
-
-    Responsibilities:
-    - provide a random target word
-    - check length validity
-    - check whether a word exists in the known list
-    """
 
     VALID_LENGTH = 6
 
