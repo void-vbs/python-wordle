@@ -18,32 +18,40 @@ class Game:
 
         if not is_length_valid:
             return None, False, False, False
-
         is_known = WordList.is_known_word(word)
 
-        resultados = []
+        
+        if not is_known:
+            return None, True, False, False
+
         target = self.palabra_secreta
+        resultados = [None] * len(target)
 
-        for i in range(len(target)):
-            letter_input = word[i]
-            letter_target = target[i]
-
-            if letter_input == letter_target:
-                estado = "verde"
-            elif letter_input in target:
-                estado = "amarillo"
+        
+        remaining = {}
+        for i, ch in enumerate(target):
+            if word[i] == ch:
+                resultados[i] = (word[i], 'verde')
             else:
-                estado = "rojo"
+                remaining[ch] = remaining.get(ch, 0) + 1
 
-            resultados.append((letter_input, estado))
+        
+        for i, ch in enumerate(word):
+            if resultados[i] is not None:
+                continue
+            if remaining.get(ch, 0) > 0:
+                resultados[i] = (ch, 'amarillo')
+                remaining[ch] -= 1
+            else:
+                resultados[i] = (ch, 'rojo')
 
         self.historial.append(resultados)
 
-        is_winner = all(estado == "verde" for _, estado in resultados)
+        is_winner = all(estado == 'verde' for _, estado in resultados)
 
         self.intentos -= 1
 
-        return resultados, True, is_known, is_winner
+        return resultados, True, True, is_winner
 
     def get_historial(self):
         return self.historial

@@ -13,9 +13,10 @@ def main():
             print("Palabra incorrecta o de longitud inválida (debe tener 6 letras).\n")
             continue
 
-        # Mostrar pistas incluso si la palabra no está en la lista conocida
+        
         if not is_known_word:
-            print("Palabra no encontrada en la lista, pero se muestran las pistas:")
+            print("Palabra no encontrada en la lista. Intenta otra.\n")
+            continue
 
         for letra, estado in resultados:
             print(f"{letra} -> {estado}", end=" | ")

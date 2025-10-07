@@ -1,0 +1,8 @@
+1. Adivina la palabra en 6 intentos.
+2. Cada intento debe ser una palabra de 6 letras.
+3. Verde: letra correcta en la posición correcta.
+4. Amarillo: letra existente pero en otra posición
+5. Rojo: la letra no existe en la palabra.
+6. Presiona 'Listo' o Enter para enviar tu intento.
+
+

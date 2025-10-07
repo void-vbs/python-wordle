@@ -1,7 +1,7 @@
 import random
 
 words = [
-    "buffer"
+    "buffer", "perrer"
 ]
 
 
