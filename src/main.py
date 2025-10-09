@@ -2,6 +2,14 @@ from game import Game
 
 
 def main():
+    """CLI entry point / Punto de entrada para línea de comandos.
+
+    English: Simple loop that prompts for a guess and prints the per-letter
+    feedback returned by Game.check_word.
+
+    Español: Bucle sencillo que pide una palabra y muestra la retroalimentación
+    por letra que devuelve Game.check_word.
+    """
     juego = Game()
 
     while juego.get_intentos_restantes() > 0:
@@ -13,7 +21,6 @@ def main():
             print("Palabra incorrecta o de longitud inválida (debe tener 6 letras).\n")
             continue
 
-        
         if not is_known_word:
             print("Palabra no encontrada en la lista. Intenta otra.\n")
             continue

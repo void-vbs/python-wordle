@@ -9,18 +9,27 @@ RULES_FILE = os.path.join(os.path.dirname(__file__), 'rules.txt')
 
 
 class WordleGameFrame(tk.Frame):
-    """Frame que contiene el juego Wordle (reutiliza la lógica existente)."""
+    """Frame that contains the Wordle game (reuses the existing logic).
 
-    def __init__(self, master=None, **kwargs):
+    Español: Frame que contiene el juego Wordle y reutiliza la lógica del
+    módulo `game.py`. Este widget es configurable por longitud (5/6/7 letras)
+    y expone un callback `on_back` para volver al menú.
+    """
+
+    def __init__(self, master=None, length: int = 6, on_back=None, **kwargs):
         super().__init__(master, **kwargs)
-        self.game = Game()
-        self.valid_length = WordList.VALID_LENGTH
+        self.length = length
+        self.on_back = on_back
+        self.game = Game(length=self.length)
+        self.valid_length = self.length
         self.max_attempts = self.game.get_intentos_restantes()
         self.current_attempt = 0
         self.entries_rows = []
         self._build_ui()
 
     def _build_ui(self):
+        # Status label (multilingual-friendly text variable)
+        # Label de estado (texto manejado por variable para facilidad de traducción)
         self.status_var = tk.StringVar(value="Escribe una palabra para jugar")
         status = tk.Label(self, textvariable=self.status_var, font=(None, 12))
         status.grid(row=0, column=0, columnspan=self.valid_length, pady=(10, 5))
@@ -37,9 +46,12 @@ class WordleGameFrame(tk.Frame):
                 e.grid(row=r, column=c, padx=5, pady=5)
                 if r != 0:
                     e.config(state='disabled')
+                # Bindings: key and focus handlers
+                # Enlaces: manejadores de tecla y foco
                 e.bind('<Key>', lambda ev, rr=r, cc=c: self._on_key(ev, rr, cc))
                 e.bind('<FocusIn>', lambda ev, rr=r, cc=c: self._on_focus(ev, rr, cc))
-                # valida para permitir solo una letra
+                # Validate input: only allow a single alphabetic character
+                # Validación: solo permitir un carácter alfabético por casilla
                 e.config(validate='key', validatecommand=(self.register(self._validate_entry), '%P'))
                 row_entries.append(e)
             self.entries_rows.append(row_entries)
@@ -52,11 +64,14 @@ class WordleGameFrame(tk.Frame):
 
         reiniciar_btn = tk.Button(buttons_frame, text='Reiniciar', command=self.restart, width=10)
         reiniciar_btn.pack(side='left', padx=5)
+        back_btn = tk.Button(buttons_frame, text='Volver', command=self._on_back, width=10)
+        back_btn.pack(side='left', padx=5)
 
-        # tecla enter
+        # Bind global Enter to submit when focus is inside the active row.
+        # Enlaza Enter globalmente para enviar cuando el foco esté en la fila activa.
         self.bind_all('<Return>', self._on_return)
 
-        
+        # focus first cell
         self.after(50, lambda: self._focus_cell(0, 0))
 
     def _on_return(self, event):
@@ -164,12 +179,22 @@ class WordleGameFrame(tk.Frame):
             self.status_var.set('Palabra correcta.')
 
         if is_winner:
-            messagebox.showinfo('¡Ganaste!', '¡Felicidades! La palabra era {}'.format(self.game.get_palabra_secreta()))
+            # Offer options: play again or go back
+            # Ofrece opciones: jugar de nuevo o volver atrás.
+            again = messagebox.askyesno('¡Ganaste!', '¡Felicidades! La palabra era {}.\n¿Jugar de nuevo?'.format(self.game.get_palabra_secreta()))
+            if again:
+                self.restart()
+            else:
+                self._on_back()
             return
 
         self.current_attempt += 1
         if self.current_attempt >= self.max_attempts:
-            messagebox.showinfo('Perdiste', 'Has agotado los intentos. La palabra era {}'.format(self.game.get_palabra_secreta()))
+            again = messagebox.askyesno('Perdiste', 'Has agotado los intentos. La palabra era {}.\n¿Jugar de nuevo?'.format(self.game.get_palabra_secreta()))
+            if again:
+                self.restart()
+            else:
+                self._on_back()
             return
 
         for e in self.entries_rows[self.current_attempt]:
@@ -179,6 +204,9 @@ class WordleGameFrame(tk.Frame):
 
     def restart(self):
         self.game = Game()
+        # ensure game uses the same length when restarting
+        # se asegura de que use la misma longitud cuando se reinicia
+        self.game = Game(length=self.length)
         self.current_attempt = 0
         self.max_attempts = self.game.get_intentos_restantes()
         self.status_var.set("Juego reiniciado")
@@ -196,9 +224,41 @@ class WordleGameFrame(tk.Frame):
                     e.config(state='disabled')
         self._focus_cell(0, 0)
 
+    def _on_back(self):
+        # callback to return to menu
+        # función de retorno para volver al menú
+        try:
+            # unbind Enter globally for this frame
+            # desasocia la tecla Enter globalmente para este marco
+            self.unbind_all('<Return>')
+        except Exception:
+            pass
+
+        # destroy this frame's widgets to avoid layering
+        # destruye los widgets de este marco para evitar superposiciones
+        try:
+            for child in self.winfo_children():
+                child.destroy()
+        except Exception:
+            pass
+
+        if callable(self.on_back):
+            self.on_back()
+        else:
+            # default: destroy parent content and rebuild menu if available
+            # predeterminado: destruye el contenido principal y reconstruye el menú si está disponible
+            root = self.master
+            try:
+                for child in root.winfo_children():
+                    child.destroy()
+            except Exception:
+                pass
+
 
 class RulesFrame(tk.Frame):
-    """Frame para mostrar y editar reglas desde un archivo de texto."""
+    """Frame to display and edit rules from a text file.
+       Frame para mostrar y editar reglas desde un archivo de texto.
+    """
 
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **kwargs)
@@ -261,9 +321,32 @@ class MainMenuApp(tk.Tk):
         exit_btn.pack(pady=10)
 
     def _start_game(self):
+        # Show mode selection (5 or 7 letters)
+        # muestra los modos (5 o 7 letras)
         for child in self.container.winfo_children():
             child.destroy()
-        self.game_frame = WordleGameFrame(self.container)
+
+        mode_frame = tk.Frame(self.container)
+        mode_frame.place(relx=0.5, rely=0.4, anchor='center')
+
+        title = tk.Label(mode_frame, text='Selecciona modo', font=(None, 24, 'bold'))
+        title.pack(pady=(0, 20))
+
+        btn5 = tk.Button(mode_frame, text='Jugar - 5 letras', width=20, height=2, command=lambda: self._launch_mode(5))
+        btn5.pack(pady=8)
+
+        btn7 = tk.Button(mode_frame, text='Jugar - 7 letras', width=20, height=2, command=lambda: self._launch_mode(7))
+        btn7.pack(pady=8)
+
+        back_btn = tk.Button(mode_frame, text='Volver', width=20, height=2, command=self._build_menu)
+        back_btn.pack(pady=8)
+
+    def _launch_mode(self, length: int):
+        for child in self.container.winfo_children():
+            child.destroy()
+        # pass the safe back callback that clears the container and rebuilds the menu
+        # pasa la función de retorno segura que limpia el contenedor y reconstruye el menú
+        self.game_frame = WordleGameFrame(self.container, length=length, on_back=self._back_to_menu)
         self.game_frame.pack(fill='both', expand=True)
 
     def _show_rules(self):
