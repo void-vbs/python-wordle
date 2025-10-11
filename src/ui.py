@@ -300,11 +300,25 @@ class MainMenuApp(tk.Tk):
         self.container = tk.Frame(self)
         self.container.pack(fill='both', expand=True)
 
+        # Use a single active frame inside `self.container` to avoid
+        # leftover widgets or stacked frames. We store it in
+        # `self.current_frame` and always destroy it before switching.
+        # Usar un único frame activo para evitar widgets residuales.
+        self.current_frame = None
+
         self._build_menu()
-        self.game_frame = None
-        self.rules_frame = None
 
     def _build_menu(self):
+        # Always clear the container before building the main menu. This
+        # removes any leftover widgets (including stray buttons created by
+        # earlier views) and guarantees a clean menu state.
+        # Siempre limpiar el contenedor antes de construir el menú.
+        for child in self.container.winfo_children():
+            try:
+                child.destroy()
+            except Exception:
+                pass
+
         menu_frame = tk.Frame(self.container)
         menu_frame.place(relx=0.5, rely=0.4, anchor='center')
 
@@ -320,14 +334,25 @@ class MainMenuApp(tk.Tk):
         exit_btn = tk.Button(menu_frame, text='Salir', width=20, height=2, command=self._exit)
         exit_btn.pack(pady=10)
 
+        # Track the active menu frame so other flows can destroy it explicitly
+        # when switching views.
+        self.current_frame = menu_frame
+
     def _start_game(self):
         # Show mode selection (5 or 7 letters)
         # muestra los modos (5 o 7 letras)
-        for child in self.container.winfo_children():
-            child.destroy()
+        # Replace the current frame with the mode selection frame.
+        if self.current_frame is not None:
+            try:
+                self.current_frame.destroy()
+            except Exception:
+                for child in self.container.winfo_children():
+                    child.destroy()
+            self.current_frame = None
 
         mode_frame = tk.Frame(self.container)
         mode_frame.place(relx=0.5, rely=0.4, anchor='center')
+        self.current_frame = mode_frame
 
         title = tk.Label(mode_frame, text='Selecciona modo', font=(None, 24, 'bold'))
         title.pack(pady=(0, 20))
@@ -338,29 +363,58 @@ class MainMenuApp(tk.Tk):
         btn7 = tk.Button(mode_frame, text='Jugar - 7 letras', width=20, height=2, command=lambda: self._launch_mode(7))
         btn7.pack(pady=8)
 
-        back_btn = tk.Button(mode_frame, text='Volver', width=20, height=2, command=self._build_menu)
+        # Use the safe back callback which clears the container and rebuilds
+        # the menu. This prevents the previous frame from remaining visible
+        # underneath the new menu.
+        # Usa el retorno seguro que limpia el contenedor y reconstruye el menú.
+        back_btn = tk.Button(mode_frame, text='Volver', width=20, height=2, command=self._back_to_menu)
         back_btn.pack(pady=8)
 
     def _launch_mode(self, length: int):
-        for child in self.container.winfo_children():
-            child.destroy()
-        # pass the safe back callback that clears the container and rebuilds the menu
-        # pasa la función de retorno segura que limpia el contenedor y reconstruye el menú
-        self.game_frame = WordleGameFrame(self.container, length=length, on_back=self._back_to_menu)
-        self.game_frame.pack(fill='both', expand=True)
+        # Replace the current frame with the game frame
+        # Remplaza el frame actual con el frame del juego
+        if self.current_frame is not None:
+            try:
+                self.current_frame.destroy()
+            except Exception:
+                for child in self.container.winfo_children():
+                    child.destroy()
+            self.current_frame = None
+
+        game_frame = WordleGameFrame(self.container, length=length, on_back=self._back_to_menu)
+        game_frame.pack(fill='both', expand=True)
+        self.current_frame = game_frame
 
     def _show_rules(self):
-        for child in self.container.winfo_children():
-            child.destroy()
-        self.rules_frame = RulesFrame(self.container)
-        self.rules_frame.pack(fill='both', expand=True)
+        # Replace the current frame with the rules frame
+        # Remplaza el frame actual con el frame de las reglas
+        if self.current_frame is not None:
+            try:
+                self.current_frame.destroy()
+            except Exception:
+                for child in self.container.winfo_children():
+                    child.destroy()
+            self.current_frame = None
 
-        back_btn = tk.Button(self.container, text='Volver', command=self._back_to_menu)
+        rules_frame = RulesFrame(self.container)
+        rules_frame.pack(fill='both', expand=True)
+        self.current_frame = rules_frame
+
+        # Place the back button inside the rules frame so it is part of the
+        # same widget tree and will be destroyed together with the frame.
+        # Coloca el botón 'Volver' dentro del frame de reglas.
+        back_btn = tk.Button(rules_frame, text='Volver', command=self._back_to_menu)
         back_btn.pack(pady=(5, 10))
 
     def _back_to_menu(self):
-        for child in self.container.winfo_children():
-            child.destroy()
+
+        if self.current_frame is not None:
+            try:
+                self.current_frame.destroy()
+            except Exception:
+                for child in self.container.winfo_children():
+                    child.destroy()
+            self.current_frame = None
         self._build_menu()
 
     def _exit(self):
