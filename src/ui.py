@@ -422,10 +422,6 @@ class MainMenuApp(tk.Tk):
         self.destroy()
 
 
-def main():
-    app = MainMenuApp()
-    app.mainloop()
-
-
-if __name__ == '__main__':
-    main()
+# The GUI entrypoint is provided by `main.py`. Do not run the UI module as a
+# script to avoid creating multiple entry points. Import `MainMenuApp` from
+# here and start it from the central `main.py`.

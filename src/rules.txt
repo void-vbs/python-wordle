@@ -5,5 +5,3 @@
 5. Rojo: la letra no existe en la palabra.
 6. Presiona 'Listo' o Enter para enviar tu intento.
 
-
-
